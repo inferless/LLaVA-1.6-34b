@@ -51,38 +51,18 @@ class InferlessPythonModel:
         input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
-        streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
-        result = ""
         with torch.inference_mode():
-            thread = Thread(target=self.model.generate, kwargs=dict(
+        # Directly generate output without using a separate thread and streaming.
+            output = self.model.generate(
                 inputs=input_ids,
                 images=image_tensor,
                 do_sample=True,
                 temperature=temperature,
                 top_p=top_p,
                 max_new_tokens=max_tokens,
-                streamer=streamer,
-                use_cache=True))
-            thread.start()
-            # workaround: second-to-last token is always " "
-            # but we want to keep it if it's not the second-to-last token
-            prepend_space = False
-            for new_text in streamer:
-                if new_text == " ":
-                    prepend_space = True
-                    continue
-                if new_text.endswith(stop_str):
-                    new_text = new_text[:-len(stop_str)].strip()
-                    prepend_space = False
-                elif prepend_space:
-                    new_text = " " + new_text
-                    prepend_space = False
-                if len(new_text):
-                    result += new_text
-            if prepend_space:
-                result += " "
-            thread.join()
-        return {"output" : result }
+                use_cache=True)
+        
+        return {"output": output }
 
 
 def finalize(self):
