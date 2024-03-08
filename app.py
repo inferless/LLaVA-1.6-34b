@@ -52,7 +52,7 @@ class InferlessPythonModel:
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
-    
+        result = ""
         with torch.inference_mode():
             thread = Thread(target=self.model.generate, kwargs=dict(
                 inputs=input_ids,
@@ -78,10 +78,12 @@ class InferlessPythonModel:
                     new_text = " " + new_text
                     prepend_space = False
                 if len(new_text):
-                    yield new_text
+                    result += new_text
             if prepend_space:
-                yield " "
+                result += " "
             thread.join()
+        return {"output" : result }
+
 
 def finalize(self):
     self.model = None
