@@ -61,8 +61,9 @@ class InferlessPythonModel:
                 top_p=top_p,
                 max_new_tokens=max_tokens,
                 use_cache=True)
-        
-        return {"output": output }
+        decoded_output = self.tokenizer.batch_decode(output, skip_special_tokens=True)
+
+        return {"output": decoded_output }
 
 
 def finalize(self):
