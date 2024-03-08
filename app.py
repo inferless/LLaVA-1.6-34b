@@ -12,88 +12,27 @@ from PIL import Image
 import requests
 from io import BytesIO
 
-from cog import BasePredictor, Input, Path, ConcatenateIterator
 import time
 import subprocess
 from threading import Thread
-
 import os
-os.environ["HUGGINGFACE_HUB_CACHE"] = os.getcwd() + "/weights"
 
-# url for the weights mirror
-REPLICATE_WEIGHTS_URL = "https://weights.replicate.delivery/default"
-# files to download from the weights mirrors
-weights = [
-    {
-        "dest": "liuhaotian/llava-v1.5-13b",
-        # git commit hash from huggingface
-        "src": "llava-v1.5-13b/006818fc465ebda4c003c0998674d9141d8d95f8",
-        "files": [
-            "config.json",
-            "generation_config.json",
-            "pytorch_model-00001-of-00003.bin",
-            "pytorch_model-00002-of-00003.bin",
-            "pytorch_model-00003-of-00003.bin",
-            "pytorch_model.bin.index.json",
-            "special_tokens_map.json",
-            "tokenizer.model",
-            "tokenizer_config.json",
-        ]
-    },
-    {
-        "dest": "openai/clip-vit-large-patch14-336",
-        "src": "clip-vit-large-patch14-336/ce19dc912ca5cd21c8a653c79e251e808ccabcd1",
-        "files": [
-            "config.json",
-            "preprocessor_config.json",
-            "pytorch_model.bin"
-        ],
-    }
-]
 
-def download_json(url: str, dest: Path):
-    res = requests.get(url, allow_redirects=True)
-    if res.status_code == 200 and res.content:
-        with dest.open("wb") as f:
-            f.write(res.content)
-    else:
-        print(f"Failed to download {url}. Status code: {res.status_code}")
 
-def download_weights(baseurl: str, basedest: str, files: list[str]):
-    basedest = Path(basedest)
-    start = time.time()
-    print("downloading to: ", basedest)
-    basedest.mkdir(parents=True, exist_ok=True)
-    for f in files:
-        dest = basedest / f
-        url = os.path.join(REPLICATE_WEIGHTS_URL, baseurl, f)
-        if not dest.exists():
-            print("downloading url: ", url)
-            if dest.suffix == ".json":
-                download_json(url, dest)
-            else:
-                subprocess.check_call(["pget", url, str(dest)], close_fds=False)
-    print("downloading took: ", time.time() - start)
-
-class Predictor(BasePredictor):
-    def setup(self) -> None:
-        """Load the model into memory to make running multiple predictions efficient"""
-        for weight in weights:
-            download_weights(weight["src"], weight["dest"], weight["files"])
-        disable_torch_init()
+class InferlessPythonModel:
+    def initialize(self):
     
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False)
 
-    def predict(
-        self,
-        image: Path = Input(description="Input image"),
-        prompt: str = Input(description="Prompt to use for text generation"),
-        top_p: float = Input(description="When decoding text, samples from the top p percentage of most likely tokens; lower to ignore less likely tokens", ge=0.0, le=1.0, default=1.0),
-        temperature: float = Input(description="Adjusts randomness of outputs, greater than 1 is random and 0 is deterministic", default=0.2, ge=0.0),
-        max_tokens: int = Input(description="Maximum number of tokens to generate. A word is generally 2-3 tokens", default=1024, ge=0),
-    ) -> ConcatenateIterator[str]:
+    def infer(self, inputs):
         """Run a single prediction on the model"""
-    
+
+        image = inputs["image"]
+        prompt: str = inputs["prompt"] 
+        top_p = 1.0
+        temperature = 0.2
+        max_tokens = 1024
+        
         conv_mode = "llava_v1"
         conv = conv_templates[conv_mode].copy()
     
@@ -143,6 +82,11 @@ class Predictor(BasePredictor):
             if prepend_space:
                 yield " "
             thread.join()
+
+def finalize(self):
+    self.model = None
+    self.image_processor = None
+    self.context_len = None
     
 
 def load_image(image_file):
