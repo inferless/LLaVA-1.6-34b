@@ -22,7 +22,7 @@ import os
 class InferlessPythonModel:
     def initialize(self):
     
-        self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.5-13b", model_name="llava-v1.5-13b", model_base=None, load_8bit=False, load_4bit=False)
+        self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model("liuhaotian/llava-v1.6-34b", model_name="llava-v1.6-34b", model_base=None, load_8bit=False, load_4bit=False)
 
     def infer(self, inputs):
         """Run a single prediction on the model"""
