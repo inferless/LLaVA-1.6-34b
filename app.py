@@ -29,9 +29,9 @@ class InferlessPythonModel:
 
         image = inputs["image"]
         prompt: str = inputs["prompt"] 
-        top_p = 1.0
-        temperature = 0.2
-        max_tokens = 200
+        top_p = 2.0
+        temperature = 0.5
+        max_tokens = 128
         
         conv_mode = "llava_v1"
         conv = conv_templates[conv_mode].copy()
