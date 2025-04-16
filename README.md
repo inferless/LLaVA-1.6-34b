@@ -1,4 +1,4 @@
-# Tutorial - Deploy LLaVA-1.6-34b using Inferless
+# Deploy LLaVA-1.6-34b using Inferless
 
 LLaVA-1.6-34b is a multimodal model with 34 billion parameters that seamlessly combines visual and language processing. Based on the LLaVA framework, it uses a vision encoder to analyze images and a language model to generate detailed, context-aware responses, enabling tasks like image captioning, visual question answering, and interactive dialogue that considers both text and visual input.
 
